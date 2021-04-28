@@ -1,0 +1,25 @@
+============================================================================
+============================================================================
+============================================================================
+Create Docker container with Postgres database:
+	docker create --name postgres -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=Slan1234 -p 5432:5432 postgres
+	
+Start container:
+	docker start postgres
+Stop container:
+	docker stop postgres
+
+Connection Info:
+	JDBC URL: `jdbc:postgresql://localhost:5432/postgres`
+	Username: `postgres`
+	Password: `Slan1234`
+
+Connect to PSQL prompt from docker:
+	docker exec -it postgres psql -U postgres
+
+Create the Database:
+	psql create database postgres;
+
+
+
+
