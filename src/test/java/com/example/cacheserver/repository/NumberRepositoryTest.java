@@ -7,7 +7,9 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.annotation.DirtiesContext;
 
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 class NumberRepositoryTest extends CacheserverApplicationTests {
 
     @Autowired
@@ -20,6 +22,8 @@ class NumberRepositoryTest extends CacheserverApplicationTests {
 
     @AfterEach
     void tearDown() {
+        numberRepository.deleteAll();
+        numberRepository.flush();
     }
 
     @Test

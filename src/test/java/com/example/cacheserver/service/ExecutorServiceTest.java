@@ -10,6 +10,7 @@ import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.function.Executable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
+import org.springframework.test.annotation.DirtiesContext;
 
 import java.util.*;
 import java.util.stream.IntStream;
@@ -18,6 +19,7 @@ import static com.example.cacheserver.service.ExecutorService.DIV;
 import static com.example.cacheserver.service.ExecutorService.SUM_IN_DB;
 
 
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 class ExecutorServiceTest extends CacheserverApplicationTests {
 
     @Autowired
@@ -37,13 +39,14 @@ class ExecutorServiceTest extends CacheserverApplicationTests {
 
     @BeforeEach
     void setUp() {
-
     }
 
     @AfterEach
     void tearDown() {
         executorService.cachedObject.setNumbers(new HashMap<>());
         executorService.cachedObject.setSum(0);
+//        numberRepository.deleteAll();
+//        numberRepository.flush();
     }
 
     @Test
@@ -139,7 +142,7 @@ class ExecutorServiceTest extends CacheserverApplicationTests {
 
     @Test
     void testDeleteActionCheckDBValues() throws CachedException {
-        insertNumbers();
+        insertNumbers(50);
 
         Numbers numberLast = numberRepository.findById(50).orElse(null);
         Assertions.assertNotNull(numberLast);
@@ -166,7 +169,7 @@ class ExecutorServiceTest extends CacheserverApplicationTests {
 
     @Test
     void testDeleteActionCheckSum() throws CachedException {
-        insertNumbers();
+        insertNumbers(50);
 
         int sum = cachedObject.getSum();
 
@@ -179,7 +182,7 @@ class ExecutorServiceTest extends CacheserverApplicationTests {
 
     @Test
     void testDeleteAction_DeleteSameIndex() throws CachedException {
-        insertNumbers();
+        insertNumbers(50);
 
         int deletedIndex = 13;
         executorService.deleteAction(deletedIndex);
@@ -187,8 +190,48 @@ class ExecutorServiceTest extends CacheserverApplicationTests {
         assertThrowsCachedException(CachedExceptionsType.INDEX_WAS_ALREADY_DELETED, () -> executorService.deleteAction(deletedIndex));
     }
 
-    private void insertNumbers() {
-        IntStream.range(1, 51).forEach( i -> {
+    @Test
+    void testDeleteAction_DeleteLast() throws CachedException {
+        int deletedIndex = 49;
+        insertNumbers(50);
+
+        Numbers number = numberRepository.findById(deletedIndex + 1).orElse(null);
+
+        executorService.deleteAction(deletedIndex);
+        Numbers numberAfterDelete = numberRepository.findById(deletedIndex + 1).orElse(null);
+        List<Integer> returnList = executorService.returnAction(Arrays.asList(deletedIndex));
+
+
+        Assertions.assertEquals(1, returnList.size());
+        Assertions.assertEquals(-1, returnList.get(0));
+
+        Assertions.assertEquals(number.getValue(), numberAfterDelete.getValue());
+    }
+
+    @Test
+    void testDeleteAction_DeleteFirst() throws CachedException {
+        int size = 5;
+        int deletedIndex = 0;
+        insertNumbers(size);
+
+        Numbers numberFirst = numberRepository.findById(deletedIndex + 1).orElse(null);
+        Numbers numberLast = numberRepository.findById(size).orElse(null);
+
+        executorService.deleteAction(deletedIndex);
+
+        Numbers numberFirstAfterDelete = numberRepository.findById(deletedIndex + 1).orElse(null);
+        Numbers numberLastAfterDelete = numberRepository.findById(size).orElse(null);
+
+        Assertions.assertEquals(numberFirst.getValue(), numberLastAfterDelete.getValue());
+        Assertions.assertEquals(numberFirstAfterDelete.getValue(), numberLast.getValue());
+    }
+
+    //===============================================================
+    //===============================================================
+    //===============================================================
+
+    private void insertNumbers(int iterations) {
+        IntStream.range(1, iterations + 1).forEach( i -> {
             try {
                 executorService.insertAction(new Random().nextInt(500) + 1);
             } catch (CachedException cachedException) {
@@ -196,9 +239,10 @@ class ExecutorServiceTest extends CacheserverApplicationTests {
                 Assertions.assertTrue(false);
             }
         });
+        Assertions.assertEquals(iterations, numberRepository.findAll().size());
     }
 
-    public static void assertThrowsCachedException(CachedExceptionsType cachedExceptionsType, Executable executable) {
+    private static void assertThrowsCachedException(CachedExceptionsType cachedExceptionsType, Executable executable) {
         CachedException exception = Assertions.assertThrows(CachedException.class, executable);
         Assertions.assertEquals(cachedExceptionsType, exception.cachedExceptionsType);
     }

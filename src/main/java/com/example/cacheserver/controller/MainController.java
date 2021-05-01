@@ -1,11 +1,10 @@
 package com.example.cacheserver.controller;
 
-import com.example.cacheserver.entity.CallableAction;
 import com.example.cacheserver.service.TaskCallable;
 import com.example.cacheserver.service.TaskFactory;
-import com.example.cacheserver.utils.CachedException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
@@ -27,9 +26,17 @@ public class MainController {
     @Autowired
     TaskFactory taskFactory;
 
+    @Value("${profile.property}")
+    public String myProfile;
+
     @GetMapping("/health")
     public ResponseEntity<String> healthController() {
         return new ResponseEntity<>("Ok", HttpStatus.OK);
+    }
+
+    @GetMapping("/profile")
+    public ResponseEntity<String> activeProfileController() {
+        return new ResponseEntity<>(myProfile, HttpStatus.OK);
     }
 
     @PostMapping("/insert")

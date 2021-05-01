@@ -8,6 +8,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("db")
 @Slf4j
@@ -17,9 +19,15 @@ public class RepositoryController {
     NumberRepository numberRepository;
 
     @GetMapping("/{id}")
-    public ResponseEntity<Numbers> getNumberObj(@PathVariable Integer id) {
+    public ResponseEntity<Numbers> getNumber(@PathVariable Integer id) {
         Numbers numbers = numberRepository.findById(id).orElse(null);
         return new ResponseEntity<>(numbers, HttpStatus.OK);
+    }
+
+    @GetMapping()
+    public ResponseEntity<List<Numbers>> getNumbers() {
+        List<Numbers> numbers = numberRepository.findAll();
+        return new ResponseEntity<List<Numbers>>(numbers, HttpStatus.OK);
     }
 
     @PostMapping("/init-db")

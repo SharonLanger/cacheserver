@@ -26,7 +26,7 @@ public class TaskCallable implements Callable<Object> {
 
     @Override
     public Object call() throws CachedException {
-        log.info("Calling TaskCallable: {}", callableAction);
+        log.debug("Calling TaskCallable: {}", callableAction);
         return executeAction();
     }
 
