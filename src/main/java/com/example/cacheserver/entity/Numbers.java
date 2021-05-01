@@ -9,14 +9,14 @@ import javax.persistence.*;
 @Table(name = "NUMBERS")
 @Data
 @Accessors(chain = true)
-public class NumberObj {
+public class Numbers {
 
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
     @Column(name = "id")
-    long id;
+    Integer id;
 
     @Column(name = "value")
-    long value;
+    Integer value;
 
 }

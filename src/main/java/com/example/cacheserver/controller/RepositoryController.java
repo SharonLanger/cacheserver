@@ -1,6 +1,6 @@
 package com.example.cacheserver.controller;
 
-import com.example.cacheserver.entity.NumberObj;
+import com.example.cacheserver.entity.Numbers;
 import com.example.cacheserver.repository.NumberRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,9 +17,9 @@ public class RepositoryController {
     NumberRepository numberRepository;
 
     @GetMapping("/{id}")
-    public ResponseEntity<NumberObj> getNumberObj(@PathVariable Long id) {
-        NumberObj numberObj = numberRepository.findById(id).orElse(null);
-        return new ResponseEntity<>(numberObj, HttpStatus.OK);
+    public ResponseEntity<Numbers> getNumberObj(@PathVariable Integer id) {
+        Numbers numbers = numberRepository.findById(id).orElse(null);
+        return new ResponseEntity<>(numbers, HttpStatus.OK);
     }
 
     @PostMapping("/init-db")
@@ -29,8 +29,8 @@ public class RepositoryController {
     }
 
     @PostMapping("/insert-number/{value}")
-    public ResponseEntity<NumberObj> insertNumber(@PathVariable Long value) {
-        NumberObj numberObjRes = numberRepository.saveAndFlush(new NumberObj().setValue(value));
-        return new ResponseEntity<>(numberObjRes, HttpStatus.OK);
+    public ResponseEntity<Numbers> insertNumber(@PathVariable Integer value) {
+        Numbers numbersRes = numberRepository.saveAndFlush(new Numbers().setValue(value));
+        return new ResponseEntity<>(numbersRes, HttpStatus.OK);
     }
 }

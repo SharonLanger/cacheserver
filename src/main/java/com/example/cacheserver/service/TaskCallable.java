@@ -1,43 +1,44 @@
 package com.example.cacheserver.service;
 
 import com.example.cacheserver.entity.CallableAction;
+import com.example.cacheserver.utils.CachedException;
 import lombok.Data;
 import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.concurrent.Callable;
 
-@Component
+
 @Slf4j
 @Data
 @Accessors(chain = true)
-public class ThreadService implements Callable<Object> {
+public class TaskCallable implements Callable<Object> {
 
     @Autowired
     ExecutorService executorService;
 
     CallableAction callableAction;
-    Long value;
-    List<Integer> indexes;
+    Integer newValue;
+    Integer deleteIndex;
+    List<Integer> returnIndexes;
 
     @Override
-    public Object call() throws Exception {
-        log.info("Calling ExecutorService: {}", callableAction);
+    public Object call() throws CachedException {
+        log.info("Calling TaskCallable: {}", callableAction);
         return executeAction();
     }
 
-    private Object executeAction() {
+    private Object executeAction() throws CachedException {
         switch (callableAction) {
             case DELETE:
-                executorService.deleteAction(value);
+                executorService.deleteAction(deleteIndex);
                 return null;
             case INSERT:
-                return executorService.insertAction(value);
+                return executorService.insertAction(newValue);
             case RETURN:
-                return executorService.returnAction(indexes);
+                return executorService.returnAction(returnIndexes);
         }
         return null;
     }

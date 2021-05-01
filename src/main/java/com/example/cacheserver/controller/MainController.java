@@ -1,7 +1,9 @@
 package com.example.cacheserver.controller;
 
 import com.example.cacheserver.entity.CallableAction;
-import com.example.cacheserver.service.ThreadService;
+import com.example.cacheserver.service.TaskCallable;
+import com.example.cacheserver.service.TaskFactory;
+import com.example.cacheserver.utils.CachedException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -23,7 +25,7 @@ public class MainController {
     ThreadPoolTaskExecutor taskExecutor;
 
     @Autowired
-    ThreadService threadService;
+    TaskFactory taskFactory;
 
     @GetMapping("/health")
     public ResponseEntity<String> healthController() {
@@ -31,40 +33,51 @@ public class MainController {
     }
 
     @PostMapping("/insert")
-    public ResponseEntity<Map<String, Integer>> insertController(@RequestBody Long value) throws ExecutionException, InterruptedException {
+    public ResponseEntity<Object> insertController(@RequestBody Integer value) throws ExecutionException, InterruptedException {
         log.info("Calling /insert with {}", value);
 
-        threadService
-                .setValue(value)
-                .setCallableAction(CallableAction.INSERT);
-        Future resFuture = taskExecutor.submit(threadService);
+        try {
+            TaskCallable taskCallable = taskFactory.createInsertAction(value);
+            Future resFuture = taskExecutor.submit(taskCallable);
 
-        return new ResponseEntity<>((Map<String, Integer>) resFuture.get(), HttpStatus.OK);
+            return new ResponseEntity<>((Map<String, Integer>) resFuture.get(), HttpStatus.OK);
+        } catch (Exception e) {
+            log.error(e.getMessage() + " {}", value);
+
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+        }
     }
 
     @GetMapping("/delete/{id}")
-    public ResponseEntity<String> deleteController(@PathVariable Long id) throws ExecutionException, InterruptedException {
+    public ResponseEntity<String> deleteController(@PathVariable Integer id) throws ExecutionException, InterruptedException {
         log.info("Calling /delete with {}", id);
 
-        threadService
-                .setValue(id)
-                .setCallableAction(CallableAction.DELETE);
-        Future resFuture = taskExecutor.submit(threadService);
-        resFuture.get();
+        try {
+            TaskCallable taskCallable = taskFactory.createDeleteAction(id);
+            Future resFuture = taskExecutor.submit(taskCallable);
+            resFuture.get();
 
-        return new ResponseEntity<>("Deleted", HttpStatus.OK);
+            return new ResponseEntity<>("Deleted", HttpStatus.OK);
+        } catch (Exception e) {
+            log.error(e.getMessage() + " {}", id);
+
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+        }
     }
 
     @GetMapping("/return")
-    public ResponseEntity<List<Integer>> returnController(@RequestBody List<Integer> indexes) throws ExecutionException, InterruptedException {
+    public ResponseEntity<Object> returnController(@RequestBody List<Integer> indexes) throws ExecutionException, InterruptedException {
         log.info("Calling /return with {}", indexes);
 
-        threadService
-                .setIndexes(indexes)
-                .setCallableAction(CallableAction.RETURN);
-        Future resFuture = taskExecutor.submit(threadService);
-
-        return new ResponseEntity<>((List<Integer>) resFuture.get(), HttpStatus.OK);
+        try {
+            TaskCallable taskCallable = taskFactory.createReturnAction(indexes);
+            Future resFuture = taskExecutor.submit(taskCallable);
+            List<Integer> resList = (List<Integer>) resFuture.get();
+            return new ResponseEntity<>(resList, HttpStatus.OK);
+        } catch (Exception e) {
+            log.error(e.getMessage() + " {}", indexes);
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+        }
     }
 
 }
